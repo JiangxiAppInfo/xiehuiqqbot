@@ -16,6 +16,34 @@ settings:
     text: "暂时没有找到对应功能，发送 /帮助 查看可用命令。"
 
 rules:
+  # 需要机器人具备直接发送 Markdown 的权限；启用后发送 /markdown 测试。
+  - id: markdown-demo
+    enabled: false
+    priority: 5
+    trigger:
+      type: command
+      values: ["markdown"]
+    reply:
+      type: markdown
+      text: |
+        # 协会小助手
+        **欢迎使用！**
+        发送 /帮助 查看可用功能。
+
+  # 模板方式：替换为已审核通过的模板 ID 和模板中实际使用的参数名。
+  # - id: markdown-template-demo
+  #   enabled: true
+  #   priority: 6
+  #   trigger:
+  #     type: command
+  #     values: ["模板演示"]
+  #   reply:
+  #     type: markdown
+  #     custom_template_id: "替换为你的模板ID"
+  #     params:
+  #       title: ["协会小助手"]
+  #       content: ["发送 /帮助 查看可用功能。"]
+
   - id: help
     enabled: true
     priority: 10

@@ -16,12 +16,40 @@ from typing import Any
 
 import yaml
 from nonebot import get_driver, logger, on_message
-from nonebot.adapters.qq import MessageEvent
+from nonebot.adapters.qq import MessageEvent, MessageSegment
+from nonebot.adapters.qq.models import MessageMarkdown, MessageMarkdownParams
 
 # 回复配置文件路径：plugins/ 的上一级（项目根目录）下的 config/replies.yaml
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "replies.yaml"
 # 支持的触发器类型：命令 / 精确匹配 / 包含关键词 / 正则
 SUPPORTED_TRIGGER_TYPES = {"command", "exact", "contains", "regex"}
+
+
+def _reply_error(reply: Any) -> str | None:
+    """校验回复结构；Markdown 正文与模板配置互斥。"""
+    if not isinstance(reply, dict):
+        return "reply 必须是对象"
+    reply_type = reply.get("type", "text")
+    if reply_type not in ("text", "markdown"):
+        return "reply.type 仅支持 text、markdown"
+    if reply_type == "markdown" and "custom_template_id" in reply:
+        template_id = reply["custom_template_id"]
+        if not isinstance(template_id, str) or not template_id.strip():
+            return "reply.custom_template_id 必须是非空字符串"
+        if "text" in reply or "candidates" in reply:
+            return "Markdown 模板不能同时配置 text 或 candidates"
+        params = reply.get("params", {})
+        if not isinstance(params, dict) or any(
+            not isinstance(key, str) or not key.strip()
+            or not isinstance(values, list) or not values
+            or not all(isinstance(value, str) for value in values)
+            for key, values in params.items()
+        ):
+            return "reply.params 必须是参数名到非空字符串数组的映射"
+        return None
+    if not (isinstance(reply.get("text"), str) or isinstance(reply.get("candidates"), list)):
+        return "reply 必须提供 text 或 candidates"
+    return None
 
 
 def _as_bool(value: Any, default: bool = False) -> bool:
@@ -81,9 +109,9 @@ def _load_config() -> dict[str, Any]:
         if not isinstance(trigger, dict) or trigger_type not in SUPPORTED_TRIGGER_TYPES:
             logger.warning(f"忽略规则 {rule_id}：trigger.type 不支持")
             continue
-        # reply 必须是对象，且目前只支持纯文本回复
-        if not isinstance(reply, dict) or reply.get("type", "text") != "text":
-            logger.warning(f"忽略规则 {rule_id}：目前只支持 reply.type=text")
+        reply_error = _reply_error(reply)
+        if reply_error:
+            logger.warning(f"忽略规则 {rule_id}：{reply_error}")
             continue
         # regex 类型必须提供合法 pattern（提前编译验证，避免运行时抛异常）
         if trigger_type == "regex":
@@ -101,10 +129,6 @@ def _load_config() -> dict[str, Any]:
             isinstance(value, str) and value for value in trigger["values"]
         ):
             logger.warning(f"忽略规则 {rule_id}：trigger.values 必须是非空字符串数组")
-            continue
-        # 回复内容必须提供 text 或 candidates 之一
-        if not (isinstance(reply.get("text"), str) or isinstance(reply.get("candidates"), list)):
-            logger.warning(f"忽略规则 {rule_id}：reply 必须提供 text 或 candidates")
             continue
         seen_ids.add(rule_id)
         valid_rules.append(rule)
@@ -182,21 +206,31 @@ def _matches(rule: dict[str, Any], text: str, event: MessageEvent, settings: dic
     return any(value in text for value in values)
 
 
-def _render_reply(rule: dict[str, Any]) -> str | None:
-    """根据规则的 reply 内容生成实际回复文本。
+def _render_reply(rule: dict[str, Any]) -> str | MessageSegment | None:
+    """根据规则的 reply 内容生成文本或 Markdown 消息段。
 
     优先使用 candidates（随机挑选一条合法候选）；没有可用候选时
     回退到固定 text；两者都无效则返回 None（表示无内容可回复）。
     """
     reply = rule["reply"]
+    if reply.get("type") == "markdown" and "custom_template_id" in reply:
+        return MessageSegment.markdown(MessageMarkdown(
+            custom_template_id=reply["custom_template_id"],
+            params=[
+                MessageMarkdownParams(key=key, values=values)
+                for key, values in reply.get("params", {}).items()
+            ],
+        ))
+    text = reply.get("text")
     candidates = reply.get("candidates")
     if isinstance(candidates, list):
         # 过滤掉非字符串或空字符串的候选项
         candidates = [item for item in candidates if isinstance(item, str) and item]
         if candidates:
-            return random.choice(candidates)
-    text = reply.get("text")
-    return text if isinstance(text, str) and text else None
+            text = random.choice(candidates)
+    if not isinstance(text, str) or not text:
+        return None
+    return MessageSegment.markdown(text) if reply.get("type") == "markdown" else text
 
 
 # 全局消息监听器：priority=10 保证较先处理，block=False 不阻断其他插件
@@ -237,9 +271,13 @@ async def handle_configured_reply(event: MessageEvent) -> None:
     # ---- 兜底回复：所有规则未命中且 settings.fallback.enabled 时触发 ----
     fallback = settings.get("fallback", {})
     if isinstance(fallback, dict) and _as_bool(fallback.get("enabled")):
-        fallback_text = fallback.get("text")
-        if isinstance(fallback_text, str) and fallback_text:
-            await reply_matcher.finish(fallback_text)
+        reply_error = _reply_error(fallback)
+        if reply_error:
+            logger.warning(f"忽略兜底回复：{reply_error}")
+            return
+        response = _render_reply({"reply": fallback})
+        if response:
+            await reply_matcher.finish(response)
 
 
 @get_driver().on_startup
