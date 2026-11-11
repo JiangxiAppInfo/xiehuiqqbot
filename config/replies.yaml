@@ -1,0 +1,67 @@
+# QQ 机器人回复配置。
+# 修改本文件后重启机器人即可生效；敏感的 QQ_BOTS 配置仍放在 .env.prod。
+version: 1
+
+settings:
+  enabled: true
+  # 命令支持 /帮助、!帮助、！帮助和不带前缀的帮助。
+  command_prefixes: ["/", "!", "！"]
+  trim_whitespace: true
+  ignore_case: true
+  only_when_mentioned: false
+  # 同一条消息只发送第一条命中的规则，规则按 priority 从小到大执行。
+  stop_after_match: true
+  fallback:
+    enabled: false
+    text: "暂时没有找到对应功能，发送 /帮助 查看可用命令。"
+
+rules:
+  - id: help
+    enabled: true
+    priority: 10
+    trigger:
+      type: command
+      values: ["帮助", "菜单"]
+    reply:
+      type: text
+      text: |
+        可用功能：
+        /帮助 - 查看帮助
+        /你好 - 向机器人打招呼
+
+  - id: greeting
+    enabled: true
+    priority: 20
+    trigger:
+      type: command
+      values: ["你好", "hi", "hello"]
+    reply:
+      type: text
+      selection: random
+      candidates:
+        - "你好呀！"
+        - "你好，有什么可以帮你？"
+        - "我在的，请说。"
+
+#  - id: join
+#    enabled: true
+#    priority: 30
+#    trigger:
+#      type: contains
+#      values: ["怎么入会", "如何加入协会", "入会流程"]
+#    reply:
+#      type: text
+#      text: |
+#        欢迎加入协会！
+#        请联系管理员，或发送 /帮助 查看其他功能。
+#
+#  - id: ask-name
+#    enabled: true
+#    priority: 40
+#    trigger:
+#      type: regex
+#      pattern: "你(叫什么|是谁)"
+#      only_when_mentioned: true
+#    reply:
+#      type: text
+#      text: "我是协会小助手。"
