@@ -39,9 +39,6 @@ reply:
     **欢迎使用！**
     发送 /帮助 查看可用功能。
 ```
-
-也可以用 `candidates` 替代 `text`，随机发送一条 Markdown 内容。配置文件中提供了未启用的 `markdown-demo` 规则；将其 `enabled` 改为 `true`，重启后发送 `/markdown` 即可测试。
-
 使用 QQ 开放平台已审核的 Markdown 模板时，配置模板 ID 和参数：
 
 ```yaml
@@ -52,9 +49,3 @@ reply:
     title: ["协会小助手"]
     content: ["发送 /帮助 查看可用功能。"]
 ```
-
-`custom_template_id` 必须是带引号的非空字符串；`params` 的键必须与模板中的参数名一致，值必须是非空字符串数组。模板方式不能同时配置 `text` 或 `candidates`。
-
-`settings.fallback` 也支持同样的 `type`、正文和模板字段，保留 `enabled: true` 即可使用 Markdown 兜底回复。现有纯文本配置无需修改。
-
-机器人需要具备相应场景的 Markdown 发送权限；直接内容权限与模板权限以 QQ 开放平台为准，支持的 Markdown 语法也以 QQ 客户端为准。权限不足或模板未审核时，QQ 接口可能拒绝发送。

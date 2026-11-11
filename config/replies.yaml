@@ -18,7 +18,7 @@ settings:
 rules:
   # 需要机器人具备直接发送 Markdown 的权限；启用后发送 /markdown 测试。
   - id: markdown-demo
-    enabled: false
+    enabled: true
     priority: 5
     trigger:
       type: command
