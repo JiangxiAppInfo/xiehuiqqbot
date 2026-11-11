@@ -44,6 +44,39 @@ rules:
   #       title: ["协会小助手"]
   #       content: ["发送 /帮助 查看可用功能。"]
 
+  - id: about-association
+    enabled: true
+    priority: 15
+    trigger:
+      type: command
+      values: ["关于协会", "协会介绍"]
+    reply:
+      type: markdown
+      text: |
+        # 关于协会
+
+        我们协会是**信息工程学院直属协会**，平时在群里可以解决会员们的各种电脑问题。
+        授课内容主要围绕 **Web 前端开发设计类**。
+        协会学长学姐大部分都是在信息学院比赛的，有想法参加比赛的会员可以来联系学长学姐👋🏻👋🏻👋🏻
+
+  - id: minecraft-servers
+    enabled: true
+    priority: 16
+    trigger:
+      type: command
+      values: ["我的世界", "minecraft", "mc"]
+    reply:
+      type: markdown
+      text: |
+        # minecraft服务器
+        当前共有两个服：
+        ## 🌏 原版插件服
+        - 版本：26.2（Java）
+        - 服务器地址：`103.236.53.254:25565`
+        ## 💀 整合包服《亡者世界》
+        - 服务器地址：`103.236.53.254:25560`
+        - 整合包文件在群文件里哦
+
   - id: help
     enabled: true
     priority: 10
@@ -56,6 +89,9 @@ rules:
         可用功能：
         /帮助 - 查看帮助
         /你好 - 向机器人打招呼
+        /关于协会 - 协会介绍
+        /我的世界 - MC 服务器信息
+        /markdown - Markdown 效果演示
 
   - id: greeting
     enabled: true

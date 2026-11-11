@@ -1,0 +1,23 @@
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: prod
+      HOST: 0.0.0.0
+      PORT: "9090"
+    ports:
+      - "9090:9090"
+    volumes:
+      - type: bind
+        source: ./.env.prod
+        target: /app/.env.prod
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./config
+        target: /app/config
+        read_only: true
+        bind:
+          create_host_path: false

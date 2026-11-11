@@ -10,6 +10,29 @@
 
 See [Docs](https://nonebot.dev/)
 
+## Docker 启动
+
+安装 Docker 和 Docker Compose v2，在项目根目录准备好 `.env.prod`（包含 `DRIVER=~fastapi+~httpx+~websockets` 和 QQ 账号配置 `QQ_BOTS`），然后执行：
+
+```sh
+docker compose up -d --build
+```
+
+服务默认使用 `9090` 端口。Compose 会设置容器监听地址为 `0.0.0.0`，并将 `.env.prod` 和 `config/` 只读挂载到容器；密钥文件不会打包进镜像。依赖直接从 `pyproject.toml` 安装。
+
+```sh
+# 查看运行日志
+docker compose logs -f bot
+# 修改回复配置或 .env.prod 后重启
+docker compose restart bot
+# 停止并删除容器
+docker compose down
+```
+
+修改代码或依赖后，重新执行 `docker compose up -d --build`。如需更改宿主机端口，修改 `compose.yaml` 中 `ports` 左侧的 `9090`。
+
+依赖下载较慢时，可先执行 `docker compose build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple`，再执行 `docker compose up -d`。
+
 ## 回复配置
 
 机器人回复规则位于 `config/replies.yaml`。修改规则后重启机器人即可生效，QQ 账号密钥仍保存在 `.env.prod`。
