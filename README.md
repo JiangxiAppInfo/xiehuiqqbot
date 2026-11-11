@@ -49,3 +49,7 @@ reply:
     title: ["协会小助手"]
     content: ["发送 /帮助 查看可用功能。"]
 ```
+
+## 入群欢迎
+
+`plugins/welcome.py` 会监听 QQ 群新成员加入事件，并发送 Markdown 欢迎消息。可以在 `config/welcome.yaml` 修改文案；设置 `enabled: false` 可关闭。修改后重启机器人生效。机器人需要具备在群内发送消息及 Markdown 的权限。
