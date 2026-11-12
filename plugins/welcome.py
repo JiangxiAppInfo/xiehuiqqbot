@@ -10,6 +10,7 @@ from nonebot import logger, on_type
 from nonebot.adapters.qq import GroupMemberAddEvent, MessageSegment
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "welcome.yaml"
+image_url = "https://blog.27hrs.asia/uploads/site/1794458623958-2ccd9591-e904-4dbd-a3ae-c56385c62739-65dec00759e2324bec86df83559ada5f.jpg"
 
 
 def _load_config() -> dict[str, Any]:
@@ -45,4 +46,9 @@ async def welcome_new_member(event: GroupMemberAddEvent) -> None:
     """在新成员加入群聊时发送 Markdown 欢迎消息。"""
     if not CONFIG["enabled"]:
         return
-    await welcome_matcher.finish(MessageSegment.markdown(CONFIG["message"]))
+    # 图片通过 markdown 语法嵌入正文，一次消息同时发出文本和图片
+    await welcome_matcher.finish(
+        MessageSegment.text(CONFIG["message"])+
+        MessageSegment.image(image_url)
+    )
+
